@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>短链接生成器</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f7f7f7; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    .container { max-width: 450px; width: 90%; margin: 20px; background: #fff; padding: 32px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    h2 { text-align: center; }
+    input[type="text"] { width: 100%; box-sizing: border-box; padding: 12px; margin: 12px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+    button { width: 100%; padding: 12px; background: #0078e7; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; transition: background-color 0.2s; }
+    button:hover { background: #005bb5; }
+    .result { margin-top: 18px; text-align: center; word-break: break-all; }
+    .short-link { color: #0078e7; font-weight: bold; text-decoration: none; }
+    .short-link:hover { text-decoration: underline; }
+    .error { color: #d00; }
+  </style>
+</head>
+<body data-i18n-title-key="generatorTitle">
+  <div class="container">
+    <h2 data-i18n-key="generatorTitle"></h2>
+    <input type="text" id="longUrl" data-i18n-key="longUrlPlaceholder">
+    <button onclick="shorten()" data-i18n-key="generateButton"></button>
+    <div class="result" id="result"></div>
+  </div>
+  <script src="/i18n.js"></script>
+  <script>
+    function shorten() {
+      const url = document.getElementById('longUrl').value.trim();
+      const result = document.getElementById('result');
+      result.innerHTML = '';
+      if (!url) {
+        result.innerHTML = '<span class="error">' + i18n.errorMissingUrl + '</span>';
+        return;
+      }
+      fetch('/api/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.short) {
+          result.innerHTML = i18n.resultPrefix + ' <a class="short-link" href="' + data.short + '" target="_blank">' + data.short + '</a>';
+        } else {
+          result.innerHTML = '<span class="error">' + i18n.errorGenerationFailed + (data.error || i18n.unknownError) + '</span>';
+        }
+      })
+      .catch(() => {
+        result.innerHTML = '<span class="error">' + i18n.errorRequestFailed + '</span>';
+      });
+    }
+  </script>
+</body>
+</html> 
